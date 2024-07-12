@@ -13,9 +13,11 @@ from homeassistant.components.water_heater import (
 )
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 import homeassistant.util.dt as dt_util
-
+import logging
 from .. import OverkizDataUpdateCoordinator
 from ..entity import OverkizEntity
+
+LOGGER = logging.getLogger(__name__)
 
 
 class AtlanticDomesticHotWaterProductionMBLComponent(OverkizEntity, WaterHeaterEntity):
@@ -160,21 +162,22 @@ class AtlanticDomesticHotWaterProductionMBLComponent(OverkizEntity, WaterHeaterE
 
     async def async_turn_away_mode_on(self) -> None:
         """Turn away mode on. This requires the start date and the end date to be set beforehand."""
-        now_date = cast(
-            dict,
-            self.executor.select_state(OverkizState.CORE_DATETIME),
-        )
-        if now_date is None:
-            now = dt_util.now()
-            now_date = {'month': now.month, 'hour': now.hour, 'year': now.year, 'weekday': now.weekday(),
-                        'day': now.day, 'minute': now.minute, 'second': now.second}
+        now = dt_util.now()
+        date_time = {'month': now.month, 'hour': now.hour, 'year': now.year, 'weekday': now.weekday(),
+                     'day': now.day, 'minute': now.minute, 'second': now.second}
+        LOGGER.warning(f"Setting date_time and away start date to: {date_time}")
 
         await self.executor.async_execute_command(
-            OverkizCommand.SET_ABSENCE_START_DATE, now_date
+            'setDateTime', date_time
         )
-        now_date["year"] = now_date["year"] + 1
+
         await self.executor.async_execute_command(
-            OverkizCommand.SET_ABSENCE_END_DATE, now_date
+            OverkizCommand.SET_ABSENCE_START_DATE, date_time
+        )
+        date_time["year"] = date_time["year"] + 1
+        LOGGER.warning(f"Setting future now_date to: {date_time}")
+        await self.executor.async_execute_command(
+            OverkizCommand.SET_ABSENCE_END_DATE, date_time
         )
         await self.executor.async_execute_command(
             OverkizCommand.SET_ABSENCE_MODE, OverkizCommandParam.PROG
