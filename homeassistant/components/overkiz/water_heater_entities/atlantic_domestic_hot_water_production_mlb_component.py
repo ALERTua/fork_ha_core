@@ -12,6 +12,7 @@ from homeassistant.components.water_heater import (
     WaterHeaterEntityFeature,
 )
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
+import homeassistant.util.dt as dt_util
 
 from .. import OverkizDataUpdateCoordinator
 from ..entity import OverkizEntity
@@ -161,11 +162,20 @@ class AtlanticDomesticHotWaterProductionMBLComponent(OverkizEntity, WaterHeaterE
         """Turn away mode on. This requires the start date and the end date to be set beforehand."""
         now_date = cast(
             dict,
-            self.executor.select_state("core:DateTimeState"),
+            self.executor.select_state(OverkizState.CORE_DATETIME),
         )
-        await self.executor.async_execute_command("setAbsenceStartDate", now_date)
+        if now_date is None:
+            now = dt_util.now()
+            now_date = {'month': now.month, 'hour': now.hour, 'year': now.year, 'weekday': now.weekday(),
+                        'day': now.day, 'minute': now.minute, 'second': now.second}
+
+        await self.executor.async_execute_command(
+            OverkizCommand.SET_ABSENCE_START_DATE, now_date
+        )
         now_date["year"] = now_date["year"] + 1
-        await self.executor.async_execute_command("setAbsenceEndDate", now_date)
+        await self.executor.async_execute_command(
+            OverkizCommand.SET_ABSENCE_END_DATE, now_date
+        )
         await self.executor.async_execute_command(
             OverkizCommand.SET_ABSENCE_MODE, OverkizCommandParam.PROG
         )
