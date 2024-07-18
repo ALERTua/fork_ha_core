@@ -57,7 +57,8 @@ class AtlanticDomesticHotWaterProductionMBLComponent(OverkizEntity, WaterHeaterE
         return cast(
             float,
             self.executor.select_state(
-                OverkizState.MODBUSLINK_MIDDLE_WATER_TEMPERATURE
+                OverkizState.MODBUSLINK_MIDDLE_WATER_TEMPERATURE,
+                OverkizState.IO_MIDDLE_WATER_TEMPERATURE,
             ),
         )
 
@@ -79,7 +80,9 @@ class AtlanticDomesticHotWaterProductionMBLComponent(OverkizEntity, WaterHeaterE
     @property
     def is_boost_mode_on(self) -> bool:
         """Return true if boost mode is on."""
-        return self.executor.select_state(OverkizState.MODBUSLINK_DHW_BOOST_MODE) in (
+        return self.executor.select_state(
+            OverkizState.MODBUSLINK_DHW_BOOST_MODE, OverkizState.IO_DHW_BOOST_MODE
+        ) in (
             OverkizCommandParam.ON,
             OverkizCommandParam.PROG,
         )
@@ -87,7 +90,9 @@ class AtlanticDomesticHotWaterProductionMBLComponent(OverkizEntity, WaterHeaterE
     @property
     def is_eco_mode_on(self) -> bool:
         """Return true if eco mode is on."""
-        return self.executor.select_state(OverkizState.MODBUSLINK_DHW_MODE) in (
+        return self.executor.select_state(
+            OverkizState.MODBUSLINK_DHW_MODE, OverkizState.IO_DHW_MODE
+        ) in (
             OverkizCommandParam.MANUAL_ECO_ACTIVE,
             OverkizCommandParam.AUTO_MODE,
         )
@@ -95,7 +100,9 @@ class AtlanticDomesticHotWaterProductionMBLComponent(OverkizEntity, WaterHeaterE
     @property
     def is_away_mode_on(self) -> bool:
         """Return true if away mode is on."""
-        return self.executor.select_state(OverkizState.MODBUSLINK_DHW_ABSENCE_MODE) in (
+        return self.executor.select_state(
+            OverkizState.MODBUSLINK_DHW_ABSENCE_MODE, OverkizState.IO_DHW_ABSENCE_MODE
+        ) in (
             OverkizCommandParam.ON,
             OverkizCommandParam.PROG,
         )
@@ -113,7 +120,12 @@ class AtlanticDomesticHotWaterProductionMBLComponent(OverkizEntity, WaterHeaterE
             return STATE_ECO
 
         if (
-            cast(str, self.executor.select_state(OverkizState.MODBUSLINK_DHW_MODE))
+            cast(
+                str,
+                self.executor.select_state(
+                    OverkizState.MODBUSLINK_DHW_MODE, OverkizState.IO_DHW_MODE
+                ),
+            )
             == OverkizCommandParam.MANUAL_ECO_INACTIVE
         ):
             return OverkizCommandParam.MANUAL
